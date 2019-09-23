@@ -1,0 +1,133 @@
+CREATE SCHEMA "public.testmyscript";
+
+show search_path;
+create schema testmyscript;
+set schema 'testmyscript';
+
+-- drop table employee;
+CREATE TABLE  Employee  (
+   uname  varchar primary key,
+   pword  varchar NOT NULL,
+   fullName  varchar NOT NULL,
+   startDate  date NOT NULL,
+   totalFunds  float not null,
+   pendingFunds  float not null,
+   awardedFunds  float not null,
+   deptName varchar not null,
+   empCode int not null,
+   higherup varchar not null -- should this be a foreign key?
+   );
+
+   -- drop table employee;
+   insert into employee values
+   ('workerbee1j', 'password', 'jane bee', current_date, 1000.00, 0.00, 0.00, 'j-hive', 1, 'dronebee1j'),
+   ('workerbee2j', 'password', 'jim bee', current_date, 1000.00, 0.00, 0.00, 'j-hive',1, 'dronebee2j'),
+   ('workerbee3j', 'password', 'joe bee', current_date, 1000.00, 0.00, 0.00, 'j-hive',1, 'droneworker_j'),
+   ('workerbee1d', 'password', 'dale bee', current_date, 1000.00, 0.00, 0.00, 'd-hive',1, 'dronebee1d'),
+   ('workerbee2d', 'password', 'diane bee', current_date, 1000.00, 0.00, 0.00, 'd-hive',1, 'dronebee2d'),
+   ('workerbee3d', 'password', 'donny bee', current_date, 1000.00, 0.00, 0.00, 'd-hive',1, 'droneworker_d'),
+   ('workerbee1k', 'password', 'karen bee', current_date, 1000.00, 0.00, 0.00, 'k-hive', 1, 'dronebee1k'),
+   ('workerbee2k', 'password', 'kristen bee', current_date, 1000.00, 0.00, 0.00, 'k-hive',1, 'dronebee2k'),
+   ('workerbee3k', 'password', 'kareem bee', current_date, 1000.00, 0.00, 0.00, 'k-hive',1, 'droneworker_k'),
+   ('dronebee1j', 'password', 'jackson drone', current_date, 1000.00, 0.00, 0.00, 'j-hive',2, 'droneworker_j'),
+   ('dronebee2j', 'password', 'jillian drone', current_date, 1000.00, 0.00, 0.00, 'j-hive',2, 'droneworker_j'),
+   ('droneworker_j', 'password', 'johnny beegood', current_date, 1000.00, 0.00, 0.00, 'j-hive', 3, 'hivequeen'),
+   ('dronebee1d', 'password', 'donovan drone', current_date, 1000.00, 0.00, 0.00, 'd-hive',2, 'droneworker_d'),
+   ('dronebee2d', 'password', 'dracula drone', current_date, 1000.00, 0.00, 0.00, 'd-hive',2, 'droneworker_d'),
+   ('droneworker_d', 'password', 'david bowbee', current_date, 1000.00, 0.00, 0.00, 'd-hive',3, 'hivequeen'),
+   ('dronebee1k', 'password', 'kristoph drone', current_date, 1000.00, 0.00, 0.00, 'k-hive',2, 'droneworker_k'),
+   ('dronebee2k', 'password', 'konner drone', current_date, 1000.00, 0.00, 0.00, 'k-hive',2, 'droneworker_k'),
+   ('droneworker_k', 'password', 'kevinsfault bee', current_date, 1000.00, 0.00, 0.00, 'k-hive',3, 'hivequeen'),
+   ('hivequeen', 'password', 'kevinsfault bee', current_date, 1000.00, 0.00, 0.00, 'colony', 4, 'admin'),
+   ('admin', 'password', 'D.Bee Admin', current_date, 1000.00, 0.00, 0.00, 'hive', 9, 'admin');
+   
+  
+  
+  
+-- TODO make req id and emp id a composite key
+-- CREATE TABLE  ApprovalChain  (
+--   request_id  int references Employee(employee_id),
+--   employee_id  int,
+--   weight  int,
+--   approved  boolean,
+--   time_left  timestamp,
+--   has_timedout  boolean
+--);
+
+-- drop table Events cascade;
+CREATE TABLE Events (
+   eventId serial primary key,
+   title varchar not null,
+   eventType varchar not null,
+   description varchar not null,
+   startDate timestamp not null,
+   endDate date not null,
+   address varchar not null,
+   passingGrade float, -- if null, presentation instead
+   eventCost float not null
+);
+drop table request;
+create table  Request  (
+     -- request_id  serial primary key,
+	 requestor varchar references Employee(uname),  
+     eventId int references Events(eventId),  
+	 submitDate timestamp default current_timestamp, --if this doesnt work use not null
+     justification varchar not null,
+     projectedReimbursment float default 0.0,
+     grantedReimbursment float default 0.0,
+     isUrgent boolean default false,
+     approvalStatus int default 0, --use codes to dictate approval status, 0=none, 1 = directsuper approval... 
+     denialReason varchar,
+     refundIncreaseJustification varchar, -- took out not null
+     eventAttachment bytea,
+     approvalAttachment bytea,  --attach email from attatchment section, and send approval type and time missed to fields 
+     						   -- on the form when attach button is pressed
+     primary key (requestor, eventID));
+     
+);
+-- TODO FIX THIS FUCKER
+--create table AdditionalInfo (
+--    infoId serial primary key,
+--    textInfo varchar,
+--    fileInfo varchar,
+--    isAnswered boolean not null,
+--    requestId int references Request(request_id), 
+--    senderId int references Employee(uname),  
+--    recipientId int references Employee(uname)
+	  
+
+--drop table AdditionalInfo;
+create table AdditionalInfo (
+    infoId serial,
+    textInfo varchar,
+    fileInfo varchar,
+    isAnswered boolean not null,
+    requestId int references Request(request_id), 
+    eventId int references request(eventId), -- additionalinfo.eventid is the id of the event this user submitted a form for
+    recipient varchar references Employee(uname),
+	primary key(infoId, eventId, recipient)
+	);
+
+
+--drop table users;
+create table Users(
+	uname varchar references employee(uname),
+	pword varchar,
+	primary key(uname)
+);
+select * from testmyscript.employee where uname = 'workerbee1j';
+commit;
+
+-- THIS IS INCREDIBLE -- 
+-- F U N C T I O N S --
+--CREATE OR REPLACE FUNCTION totalnumEmployees (x integer)
+--RETURNS integer AS $totalEmps$
+--declare
+--	totalEmps integer;
+--BEGIN
+--   SELECT count(*) into totalEmps FROM employee;
+--  RETURN totalEmps * x;
+--END;
+--$totalEmps$ LANGUAGE plpgsql;
+
+--select totalnumEmployees(5);
